@@ -59,6 +59,7 @@ public class PetMachine {
             System.out.println("O pet " + this.pet.getName() + " está na máquina nesse momento");
             return;
         }
+        
 
         this.pet = pet;
         System.out.println("O pet " + pet.getName() + " foi colocado na máquina");
