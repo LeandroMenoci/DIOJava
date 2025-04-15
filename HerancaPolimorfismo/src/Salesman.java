@@ -1,4 +1,4 @@
-public non-sealed class Salesman extends Employee {
+public class Salesman extends Employee {
 
     private double percentPerSold;
     private double soldAmount;
@@ -14,7 +14,6 @@ public non-sealed class Salesman extends Employee {
         return "SL" + this.code;
     }
 
-    @Override
     public double getFullSalary() {
         return this.salary + (soldAmount * percentPerSold) / 100;
     }

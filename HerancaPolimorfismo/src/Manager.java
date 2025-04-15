@@ -1,4 +1,4 @@
-public non-sealed class Manager extends Employee {
+public  class Manager extends Employee {
 
     private String login;
     private String password;
@@ -43,7 +43,7 @@ public non-sealed class Manager extends Employee {
         return "MN" + this.code;
     }
 
-    @Override
+
     public double getFullSalary() {
         return this.salary + this.commission;
     }

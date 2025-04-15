@@ -1,4 +1,4 @@
-public sealed abstract class Employee permits Manager, Salesman{
+public class Employee{
 
     protected String code;
     protected String name;
@@ -56,6 +56,4 @@ public sealed abstract class Employee permits Manager, Salesman{
     public void setSalary(double salary) {
         this.salary = salary;
     }
-
-    public abstract double getFullSalary();
 }
