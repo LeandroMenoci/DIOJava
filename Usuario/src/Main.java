@@ -5,6 +5,7 @@ public class Main {
         Atendente atendente = new Atendente("Carla", "carla@empresa.com", "atende123");
 
         gerente.realizarLogin("alice@empresa.com", "admin123");
+
         gerente.gerarRelatorioFinanceiro();
         gerente.consultarVendas();
 
