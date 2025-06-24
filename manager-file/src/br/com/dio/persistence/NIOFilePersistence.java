@@ -2,6 +2,9 @@ package br.com.dio.persistence;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class NIOFilePersistence implements FilePersistence{
 
@@ -35,12 +38,28 @@ public class NIOFilePersistence implements FilePersistence{
 
     @Override
     public boolean remove(String setence) {
-        return false;
+        var contentList = toListString();
+
+        if(contentList.stream().noneMatch(c -> c.contains(setence))) return false;
+
+        clearFile();
+        contentList.stream().filter(c -> !c.contains(setence))
+                .forEach(this::write);
+        return true;
     }
 
     @Override
     public String replace(String oldContent, String newContent) {
-        return "";
+        var contentList = toListString();
+
+        if(contentList.stream().noneMatch(c -> c.contains(oldContent))) return "";
+
+        clearFile();
+        contentList.stream()
+                .map(c -> c.contains(oldContent) ? newContent : c)
+                .forEach(this::write);
+
+        return newContent;
     }
 
     @Override
@@ -67,7 +86,34 @@ public class NIOFilePersistence implements FilePersistence{
 
     @Override
     public String findBy(String setence) {
-        return "";
+        var content = new StringBuilder();
+        try (
+                var file = new RandomAccessFile(new File(currentDir + storedDir + fileName), "r");
+                var channel = file.getChannel()) {
+            var buffer = ByteBuffer.allocate(256);
+            var bytesReader = channel.read(buffer);
+            while (bytesReader != -1){
+                buffer.flip();
+                while (buffer.hasRemaining()) {
+                    while (!content.toString().endsWith(System.lineSeparator())) {
+                        content.append((char) buffer.get());
+                    }
+
+                    if(content.toString().contains(setence)) {
+                        break;
+                    } else {
+                        content.setLength(0);
+                    }
+
+                    if (!content.isEmpty()) break;
+                }
+                buffer.clear();
+                bytesReader = channel.read(buffer);
+            }
+        }catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return content.toString();
     }
 
     private void clearFile() {
@@ -76,5 +122,10 @@ public class NIOFilePersistence implements FilePersistence{
         } catch (IOException ex){
             ex.printStackTrace();
         }
+    }
+
+    private List<String> toListString() {
+        var content = findAll();
+        return new ArrayList<>(Stream.of(content.split(System.lineSeparator())).toList());
     }
 }

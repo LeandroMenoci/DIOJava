@@ -17,6 +17,19 @@ public class Main {
         System.out.println("===================");
         System.out.println(persistence.findAll());
         System.out.println("===================");
+//        System.out.println(persistence.remove("@claudia"));
+        System.out.println("===================");
+//        System.out.println(persistence.remove("@joao"));
+        System.out.println("===================");
+        System.out.println(persistence.findBy("leandro;"));
+        System.out.println("===================");
+        System.out.println(persistence.findBy("@claudia"));
+        System.out.println("===================");
+        System.out.println(persistence.replace("@rubens", "joao;joao@joao.com;11/07/2010"));
+        System.out.println("===================");
+        System.out.println(persistence.findAll());
+        System.out.println("===================");
+
 
     }
 }
