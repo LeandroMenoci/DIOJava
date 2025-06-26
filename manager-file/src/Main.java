@@ -1,4 +1,5 @@
 import br.com.dio.persistence.FilePersistence;
+import br.com.dio.persistence.NIO2FilePersistence;
 import br.com.dio.persistence.NIOFilePersistence;
 
 import java.io.IOException;
@@ -6,7 +7,7 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        FilePersistence persistence = new NIOFilePersistence("user.csv");
+        FilePersistence persistence = new NIO2FilePersistence("user.csv");
         System.out.println(persistence.write("bianca;bianca@bianca.com;11/03/2000;"));
         System.out.println("===================");
         System.out.println(persistence.write("rubens;rubens@rubens.com;29/03/1992;"));
