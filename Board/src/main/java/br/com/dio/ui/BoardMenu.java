@@ -1,10 +1,13 @@
 package br.com.dio.ui;
 
 import br.com.dio.persistence.entity.BoardColumnEntity;
+import br.com.dio.persistence.entity.BoardColumnKindEnum;
 import br.com.dio.persistence.entity.BoardEntity;
+import br.com.dio.persistence.entity.CardEntity;
 import br.com.dio.service.BoardColumnQueryService;
 import br.com.dio.service.BoardQueryService;
 import br.com.dio.service.CardQueryService;
+import br.com.dio.service.CardService;
 import lombok.AllArgsConstructor;
 
 import java.sql.SQLException;
@@ -20,7 +23,7 @@ public class BoardMenu {
 
     public void execute() {
         try {
-            System.out.printf("Bem vindo ao board %s, selecione a operação desejada", entity.getId());
+            System.out.printf("Bem vindo ao board %s, selecione a operação desejada\n", entity.getId());
             var option = -1;
             while (option != 9) {
                 System.out.println("1 - Criar um card");
@@ -30,7 +33,7 @@ public class BoardMenu {
                 System.out.println("5 - Cancelar um card");
                 System.out.println("6 - Visualizar board");
                 System.out.println("7 - Visualizar colunas com cards");
-                System.out.println("8 - Visualizar cad");
+                System.out.println("8 - Visualizar card");
                 System.out.println("9 - Voltar para o menu anterior");
                 System.out.println("10 - Sair");
                 option = scanner.nextInt();
@@ -56,7 +59,19 @@ public class BoardMenu {
         }
     }
 
-    private void createCard() {
+    private void createCard() throws SQLException{
+        var card = new CardEntity();
+        System.out.println("Informe o titulo do card");
+        card.setTitle(scanner.next());
+        System.out.println("Informe a descrição do card");
+        card.setDescription(scanner.next());
+        card.setBoardColumn(entity.getInitialColumn());
+
+        try(var connection = getConnection()) {
+            new CardService(connection).insert(card);
+            System.out.println("Card criado com sucesso");
+        }
+
     }
 
     private void moveCardToNextColumn() {
@@ -94,7 +109,7 @@ public class BoardMenu {
             var column = new BoardColumnQueryService(connection).findById(selectedColumn);
             column.ifPresent(co -> {
                 System.out.printf("Coluna %s tipo %s\n", co.getName(), co.getKind());
-                co.getCards().forEach(ca -> System.out.printf("Card %s - %s\nDescrição: %s", ca.getId(), ca.getTitle(), ca.getDescription()));
+                co.getCards().forEach(ca -> System.out.printf("Card %s - %s\nDescrição: %s\n", ca.getId(), ca.getTitle(), ca.getDescription()));
             });
         }
     }
