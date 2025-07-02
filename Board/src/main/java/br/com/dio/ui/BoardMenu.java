@@ -4,6 +4,7 @@ import br.com.dio.persistence.entity.BoardColumnEntity;
 import br.com.dio.persistence.entity.BoardEntity;
 import br.com.dio.service.BoardColumnQueryService;
 import br.com.dio.service.BoardQueryService;
+import br.com.dio.service.CardQueryService;
 import lombok.AllArgsConstructor;
 
 import java.sql.SQLException;
@@ -75,9 +76,7 @@ public class BoardMenu {
             var optional = new BoardQueryService(connection).showBoardDetails(entity.getId());
             optional.ifPresent(b -> {
                 System.out.printf("Board [%s, %s]\n", b.id(), b.name());
-                b.columns().forEach(c -> {
-                    System.out.printf("Coluna [%s] tipo: [%s] tem %s cards\n", c.name(), c.kind(), c.cardsAmount());
-                });
+                b.columns().forEach(c -> System.out.printf("Coluna [%s] tipo: [%s] tem %s cards\n", c.name(), c.kind(), c.cardsAmount()));
             });
         }
     }
@@ -100,7 +99,20 @@ public class BoardMenu {
         }
     }
 
-    private void showCard() {
+    private void showCard() throws SQLException {
+        System.out.println("Informe o id do card que deseja visualizar");
+        var selectedCardId = scanner.nextLong();
+        try(var connection = getConnection()) {
+            new CardQueryService(connection).findById(selectedCardId)
+                    .ifPresentOrElse(c -> {
+                                System.out.printf("Card %s - %s\n", c.id(), c.title());
+                                System.out.printf("Descrição: %s\n", c.description());
+                                System.out.println(c.blocked() ? "Está bloqueado. Motivo: " + c.blockReason() : "Está desbloqueado");
+                                System.out.printf("Já foi bloqueado %s vezes\n", c.blocksAmount());
+                                System.out.printf("No momento está na coluna %s - %s\n", c.columnId(), c.columnName());
+                            },
+                            () -> System.out.printf("Não existe um card com o id %s\n", selectedCardId));
 
+        }
     }
 }
