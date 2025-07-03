@@ -96,10 +96,36 @@ public class BoardMenu {
         }
     }
 
-    private void blockCard() {
+    private void blockCard() throws SQLException {
+        // Solicita o ID do card a ser bloqueado
+        System.out.println("Informe o id do card que deseja bloquear");
+        var cardId = scanner.nextLong();
+
+        // Solicita o motivo do bloqueio
+        System.out.println("Informe o motivo do bloqueio do card");
+        var reason = scanner.next();
+
+        // Mapeia todas as colunas do board para DTOs
+        var boardColumnsInfo = entity.getBoardColumns().stream()
+                .map(bc -> new BoardColumnInfoDTO(
+                        bc.getId(),
+                        bc.getOrder(),
+                        bc.getKind()
+                ))
+                .toList();
+
+        // Abre conexão e realiza o bloqueio do card via serviço
+        try (var connection = getConnection()) {
+            new CardService(connection).block(cardId, reason, boardColumnsInfo);
+            System.out.println("Card bloqueado com sucesso!");
+        } catch (RuntimeException ex) {
+            // Captura e exibe mensagens de exceções de negócio (ex: já bloqueado)
+            System.out.println(ex.getMessage());
+        }
     }
 
-    private void unblockCard() {
+
+    private void unblockCard() throws SQLException {
     }
 
     private void cancelCard() {
