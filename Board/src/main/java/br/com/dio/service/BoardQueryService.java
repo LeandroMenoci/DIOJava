@@ -14,29 +14,35 @@ import java.util.Optional;
 public class BoardQueryService {
 
     private final Connection connection;
+    private final BoardDAO boardDAO = new BoardDAO(connection);
+    private final BoardColumnDAO boardColumnDAO = new BoardColumnDAO(connection);
+
+    private Optional<BoardEntity> findBoardWithColumns(Long id) throws SQLException {
+        return boardDAO.findById(id)
+                .map(entity -> {
+                    try {
+                        entity.setBoardColumns(boardColumnDAO.findByBoardId(entity.getId()));
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return entity;
+                });
+    }
 
     public Optional<BoardEntity> findById(Long id) throws SQLException {
-        var dao = new BoardDAO(connection);
-        var boardColumnDAO = new BoardColumnDAO(connection);
-        var optional = dao.findById(id);
-        if(optional.isPresent()){
-            var entity = optional.get();
-            entity.setBoardColumns(boardColumnDAO.findByBoardId(entity.getId()));
-            return Optional.of(entity);
-        }
-        return Optional.empty();
+        return findBoardWithColumns(id);
     }
 
     public Optional<BoardDetailsDTO> showBoardDetails(Long id) throws SQLException {
-        var dao = new BoardDAO(connection);
-        var boardColumnDAO = new BoardColumnDAO(connection);
-        var optional = dao.findById(id);
-        if(optional.isPresent()){
-            var entity = optional.get();
-            var columns = boardColumnDAO.findByBoardIdWithDetails(entity.getId());
-            var dto = new BoardDetailsDTO(entity.getId(), entity.getName(), columns);
-            return Optional.of(dto);
-        }
-        return Optional.empty();
+        return findBoardWithColumns(id)
+                .map(entity -> {
+                    try {
+                        var columns = boardColumnDAO.findByBoardIdWithDetails(entity.getId());
+                        return new BoardDetailsDTO(entity.getId(), entity.getName(), columns);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 }
+

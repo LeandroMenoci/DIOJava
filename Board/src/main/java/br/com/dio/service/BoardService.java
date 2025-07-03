@@ -2,6 +2,7 @@ package br.com.dio.service;
 
 import br.com.dio.persistence.dao.BoardColumnDAO;
 import br.com.dio.persistence.dao.BoardDAO;
+import br.com.dio.persistence.entity.BoardColumnEntity;
 import br.com.dio.persistence.entity.BoardEntity;
 import lombok.AllArgsConstructor;
 
@@ -17,26 +18,27 @@ public class BoardService {
         var dao = new BoardDAO(connection);
         var boardColumnDAO = new BoardColumnDAO(connection);
         try {
+            // Insere o board e associa o board em cada coluna
             dao.insert(entity);
-            var columns = entity.getBoardColumns().stream().map(c -> {
-                c.setBoard(entity);
-                return c;
-            }).toList();
-            for (var column : columns) {
+
+            // Associa o board na coluna
+            for (BoardColumnEntity column : entity.getBoardColumns()) {
+                column.setBoard(entity);
                 boardColumnDAO.insert(column);
             }
-            connection.commit();
+
+            connection.commit(); // commit só após inserir tudo
         } catch (SQLException ex) {
-            connection.rollback();
+            connection.rollback(); // rollback em caso de erro
             throw ex;
         }
 
         return entity;
     }
 
-    public boolean delete(Long id) throws SQLException{
+    public boolean delete(Long id) throws SQLException {
         var dao = new BoardDAO(connection);
-        try{
+        try {
             if (!dao.exists(id)) {
                 return false;
             }
@@ -49,3 +51,4 @@ public class BoardService {
         }
     }
 }
+

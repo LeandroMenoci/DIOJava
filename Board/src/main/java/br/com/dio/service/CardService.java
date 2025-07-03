@@ -1,6 +1,7 @@
 package br.com.dio.service;
 
 import br.com.dio.dto.BoardColumnInfoDTO;
+import br.com.dio.dto.CardDetailsDTO;
 import br.com.dio.exception.CardBlockedException;
 import br.com.dio.exception.CardFinishedException;
 import br.com.dio.exception.EntityNotFoundException;
@@ -53,10 +54,7 @@ public class CardService {
             var dao = new CardDAO(connection);
 
             // Busca os dados do card pelo ID
-            var optional = dao.findById(cardId);
-            var dto = optional.orElseThrow(() ->
-                    new EntityNotFoundException("O card de id %s não foi encontrado".formatted(cardId))
-            );
+            var dto = getCardOrThrow(cardId);
 
             // Verifica se o card está bloqueado
             if (dto.blocked()) {
@@ -80,7 +78,7 @@ public class CardService {
             var nextColumn = boardColumnsInfo.stream()
                     .filter(bc -> bc.order() == currentColumn.order() + 1)
                     .findFirst()
-                    .orElseThrow(() ->  new IllegalStateException("O card está cancelado")); // Garante que a próxima coluna exista
+                    .orElseThrow(() -> new IllegalStateException("Não foi possível encontrar a próxima coluna para o card"));// Garante que a próxima coluna exista
 
             // Move o card para a nova coluna
             dao.moveToColumn(nextColumn.id(), cardId);
@@ -100,10 +98,7 @@ public class CardService {
             var dao = new CardDAO(connection);
 
             // Busca os dados do card pelo ID
-            var optional = dao.findById(cardId);
-            var dto = optional.orElseThrow(() ->
-                    new EntityNotFoundException("O card de id %s não foi encontrado".formatted(cardId))
-            );
+            var dto = getCardOrThrow(cardId);
 
             // Verifica se o card está bloqueado
             if (dto.blocked()) {
@@ -148,10 +143,7 @@ public class CardService {
             var dao = new CardDAO(connection);
 
             // Busca os dados do card
-            var optional = dao.findById(id);
-            var dto = optional.orElseThrow(() ->
-                    new EntityNotFoundException("O card de id %s não foi encontrado".formatted(id))
-            );
+            var dto = getCardOrThrow(id);
 
             // Verifica se já está bloqueado
             if (dto.blocked()) {
@@ -190,10 +182,7 @@ public class CardService {
             var dao = new CardDAO(connection);
 
             // Busca os dados do card
-            var optional = dao.findById(id);
-            var dto = optional.orElseThrow(() ->
-                    new EntityNotFoundException("O card de id %s não foi encontrado".formatted(id))
-            );
+            var dto = getCardOrThrow(id);
 
             // Verifica se o card está atualmente bloqueado
             if (!dto.blocked()) {
@@ -211,5 +200,13 @@ public class CardService {
             throw ex;
         }
     }
+
+    private CardDetailsDTO getCardOrThrow(Long id) throws SQLException {
+        var dao = new CardDAO(connection);
+        return dao.findById(id).orElseThrow(() ->
+                new EntityNotFoundException("O card de id %s não foi encontrado".formatted(id))
+        );
+    }
+
 
 }
