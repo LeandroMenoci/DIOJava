@@ -91,6 +91,8 @@ public class BoardMenu {
         // Abre conexão com o banco e executa a movimentação via serviço
         try (var connection = getConnection()) {
             new CardService(connection).moveToNextColumn(cardId, boardColumnsInfo);
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
         }
     }
 
@@ -101,7 +103,32 @@ public class BoardMenu {
     }
 
     private void cancelCard() {
+        // Solicita o ID do card ao usuário
+        System.out.println("Informe o id do card que deseja cancelar");
+        var cardId = scanner.nextLong();
+
+        // Obtém a coluna de cancelamento configurada no board
+        var cancelColumn = entity.getCancelColumn();
+
+        // Constrói uma lista com as informações básicas de cada coluna do board
+        var boardColumnsInfo = entity.getBoardColumns().stream()
+                .map(bc -> new BoardColumnInfoDTO(
+                        bc.getId(),
+                        bc.getOrder(),
+                        bc.getKind()
+                ))
+                .toList();
+
+        // Abre a conexão e chama o serviço responsável por cancelar (mover) o card
+        try (var connection = getConnection()) {
+            new CardService(connection).cancel(cardId, cancelColumn.getId(), boardColumnsInfo);
+            System.out.println("Card cancelado com sucesso!");
+        } catch (RuntimeException | SQLException ex) {
+            // Captura e exibe erros de negócio ou banco de dados
+            System.out.println(ex.getMessage());
+        }
     }
+
 
     private void showBoard() throws SQLException {
         // Tenta obter conexão com o banco (fecha automaticamente com try-with-resources)
