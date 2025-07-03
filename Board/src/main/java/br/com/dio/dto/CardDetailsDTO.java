@@ -1,4 +1,4 @@
-package br.com.dio.persistence.dto;
+package br.com.dio.dto;
 
 import java.time.OffsetDateTime;
 

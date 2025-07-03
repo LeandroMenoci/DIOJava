@@ -1,6 +1,6 @@
 package br.com.dio.persistence.dao;
 
-import br.com.dio.persistence.dto.CardDetailsDTO;
+import br.com.dio.dto.CardDetailsDTO;
 import br.com.dio.persistence.entity.CardEntity;
 import com.mysql.cj.jdbc.StatementImpl;
 import lombok.AllArgsConstructor;
@@ -46,6 +46,18 @@ public class CardDAO {
 
         // Retorna o objeto atualizado com o ID
         return entity;
+    }
+
+    public void moveToColumn(final Long columnId, final Long cardId) throws SQLException {
+        // SQL para mover o card para outra coluna
+        var sql = "UPDATE CARDS SET board_column_id = ? WHERE id = ?";
+
+        try (var statement = connection.prepareStatement(sql)) {
+            var i = 1;
+            statement.setLong(i++, columnId); // Nova coluna
+            statement.setLong(i, cardId);     // ID do card a ser movido
+            statement.executeUpdate();        // Executa o update
+        }
     }
 
     public Optional<CardDetailsDTO> findById(Long id) throws SQLException {

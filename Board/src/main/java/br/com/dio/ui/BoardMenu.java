@@ -1,7 +1,7 @@
 package br.com.dio.ui;
 
+import br.com.dio.dto.BoardColumnInfoDTO;
 import br.com.dio.persistence.entity.BoardColumnEntity;
-import br.com.dio.persistence.entity.BoardColumnKindEnum;
 import br.com.dio.persistence.entity.BoardEntity;
 import br.com.dio.persistence.entity.CardEntity;
 import br.com.dio.service.BoardColumnQueryService;
@@ -61,7 +61,7 @@ public class BoardMenu {
 
     private void createCard() throws SQLException{
         var card = new CardEntity();
-        System.out.println("Informe o titulo do card");
+        System.out.println("Informe o título do card");
         card.setTitle(scanner.next());
         System.out.println("Informe a descrição do card");
         card.setDescription(scanner.next());
@@ -74,7 +74,24 @@ public class BoardMenu {
 
     }
 
-    private void moveCardToNextColumn() {
+    private void moveCardToNextColumn() throws SQLException {
+        // Solicita ao usuário o ID do card a ser movido
+        System.out.println("Informe o id do card que deseja mover para a próxima coluna");
+        var cardId = scanner.nextLong();
+
+        // Mapeia as colunas do board atual em uma lista de DTOs com id, ordem e tipo
+        var boardColumnsInfo = entity.getBoardColumns().stream()
+                .map(bc -> new BoardColumnInfoDTO(
+                        bc.getId(),
+                        bc.getOrder(),
+                        bc.getKind()
+                ))
+                .toList();
+
+        // Abre conexão com o banco e executa a movimentação via serviço
+        try (var connection = getConnection()) {
+            new CardService(connection).moveToNextColumn(cardId, boardColumnsInfo);
+        }
     }
 
     private void blockCard() {
@@ -87,47 +104,98 @@ public class BoardMenu {
     }
 
     private void showBoard() throws SQLException {
-        try(var connection = getConnection()) {
+        // Tenta obter conexão com o banco (fecha automaticamente com try-with-resources)
+        try (var connection = getConnection()) {
+            // Chama o serviço para buscar os detalhes do board atual pelo ID
             var optional = new BoardQueryService(connection).showBoardDetails(entity.getId());
+
+            // Se o board for encontrado, imprime seus detalhes
             optional.ifPresent(b -> {
-                System.out.printf("Board [%s, %s]\n", b.id(), b.name());
-                b.columns().forEach(c -> System.out.printf("Coluna [%s] tipo: [%s] tem %s cards\n", c.name(), c.kind(), c.cardsAmount()));
+                // Exibe ID e nome do board
+                System.out.printf("Board [%d, %s]\n", b.id(), b.name());
+
+                // Para cada coluna do board, mostra nome, tipo e quantidade de cards
+                b.columns().forEach(c ->
+                        System.out.printf("Coluna [%s] tipo: [%s] tem %d cards\n",
+                                c.name(),
+                                c.kind(),
+                                c.cardsAmount())
+                );
             });
         }
     }
 
     private void showColumn() throws SQLException {
+        // Exibe o nome do board atual e inicia o processo de seleção de coluna
         System.out.printf("Escolha uma coluna do board %s\n", entity.getName());
-        var columnsIds = entity.getBoardColumns().stream().map(BoardColumnEntity::getId).toList();
+
+        // Coleta todos os IDs de colunas associadas ao board atual
+        var columnsIds = entity.getBoardColumns()
+                .stream()
+                .map(BoardColumnEntity::getId)
+                .toList();
+
         var selectedColumn = -1L;
+
+        // Enquanto o usuário não informar um ‘ID’ válido, continua a solicitar entrada
         while (!columnsIds.contains(selectedColumn)) {
-            entity.getBoardColumns().forEach(c -> System.out.printf("%s - %s [%s]\n", c.getId(), c.getName(), c.getKind()));
-            selectedColumn = scanner.nextLong();
+            // Exibe todas as colunas disponíveis do board
+            entity.getBoardColumns().forEach(c ->
+                    System.out.printf("%s - %s [%s]\n", c.getId(), c.getName(), c.getKind())
+            );
+            selectedColumn = scanner.nextLong(); // Lê o ID da coluna escolhida
         }
 
-        try(var connection = getConnection()) {
+        // Após escolha válida, busca detalhes da coluna no banco de dados
+        try (var connection = getConnection()) {
             var column = new BoardColumnQueryService(connection).findById(selectedColumn);
+
+            // Se a coluna existir, exibe suas informações e lista de cards
             column.ifPresent(co -> {
                 System.out.printf("Coluna %s tipo %s\n", co.getName(), co.getKind());
-                co.getCards().forEach(ca -> System.out.printf("Card %s - %s\nDescrição: %s\n", ca.getId(), ca.getTitle(), ca.getDescription()));
+
+                // Para cada card associado à coluna, imprime ID, título e descrição
+                co.getCards().forEach(ca ->
+                        System.out.printf("Card %s - %s\nDescrição: %s\n",
+                                ca.getId(),
+                                ca.getTitle(),
+                                ca.getDescription())
+                );
             });
         }
     }
 
     private void showCard() throws SQLException {
+        // Solicita ao usuário o ID do card a ser visualizado
         System.out.println("Informe o id do card que deseja visualizar");
         var selectedCardId = scanner.nextLong();
-        try(var connection = getConnection()) {
-            new CardQueryService(connection).findById(selectedCardId)
-                    .ifPresentOrElse(c -> {
-                                System.out.printf("Card %s - %s\n", c.id(), c.title());
-                                System.out.printf("Descrição: %s\n", c.description());
-                                System.out.println(c.blocked() ? "Está bloqueado. Motivo: " + c.blockReason() : "Está desbloqueado");
-                                System.out.printf("Já foi bloqueado %s vezes\n", c.blocksAmount());
-                                System.out.printf("No momento está na coluna %s - %s\n", c.columnId(), c.columnName());
-                            },
-                            () -> System.out.printf("Não existe um card com o id %s\n", selectedCardId));
 
+        // Abre conexão com o banco de dados
+        try (var connection = getConnection()) {
+            // Usa um serviço de consulta para buscar o card pelo ID
+            new CardQueryService(connection).findById(selectedCardId)
+                    .ifPresentOrElse(
+                            c -> {
+                                // Exibe os dados do card encontrados
+                                System.out.printf("Card %d - %s\n", c.id(), c.title());
+                                System.out.printf("Descrição: %s\n", c.description());
+
+                                // Mostra o estado de bloqueio e o motivo, se houver
+                                System.out.println(c.blocked()
+                                        ? "Está bloqueado. Motivo: " + c.blockReason()
+                                        : "Está desbloqueado");
+
+                                // Mostra quantas vezes foi bloqueado
+                                System.out.printf("Já foi bloqueado %d vezes\n", c.blocksAmount());
+
+                                // Mostra a coluna atual onde o card está
+                                System.out.printf("No momento está na coluna %d - %s\n", c.columnId(), c.columnName());
+                            },
+                            () -> {
+                                // Mensagem caso nenhum card seja encontrado com o ID informado
+                                System.out.printf("Não existe um card com o id %d\n", selectedCardId);
+                            }
+                    );
         }
     }
 }
