@@ -185,4 +185,31 @@ public class CardService {
         }
     }
 
+    public void unblock(final Long id, final String reason) throws SQLException {
+        try {
+            var dao = new CardDAO(connection);
+
+            // Busca os dados do card
+            var optional = dao.findById(id);
+            var dto = optional.orElseThrow(() ->
+                    new EntityNotFoundException("O card de id %s não foi encontrado".formatted(id))
+            );
+
+            // Verifica se o card está atualmente bloqueado
+            if (!dto.blocked()) {
+                throw new IllegalStateException("O card %s não está bloqueado".formatted(id));
+            }
+
+            // Realiza o desbloqueio via BlockDAO
+            var blockDAO = new BlockDAO(connection);
+            blockDAO.unblock(id, reason); // metodo para atualizar 'unblocked_at'
+
+            connection.commit();
+
+        } catch (SQLException ex) {
+            connection.rollback();
+            throw ex;
+        }
+    }
+
 }
