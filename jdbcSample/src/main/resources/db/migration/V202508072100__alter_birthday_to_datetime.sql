@@ -1,0 +1,1 @@
+ALTER TABLE employees MODIFY birthday DATETIME(3) NOT NULL;

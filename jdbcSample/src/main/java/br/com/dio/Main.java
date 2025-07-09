@@ -4,15 +4,23 @@ import br.com.dio.persistence.EmployeeAuditDAO;
 import br.com.dio.persistence.EmployeeDAO;
 import br.com.dio.persistence.EmployeeParamDAO;
 import br.com.dio.persistence.entity.EmployeeEntity;
+import net.datafaker.Faker;
 import org.flywaydb.core.Flyway;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.util.Locale;
+import java.util.stream.Stream;
+
+import static java.time.ZoneOffset.UTC;
 
 public class Main {
 
     private final static EmployeeParamDAO employeeDAO = new EmployeeParamDAO();
     private final static EmployeeAuditDAO employeeAuditDAO = new EmployeeAuditDAO();
+    private final static Faker faker = new Faker(Locale.of("pt", "BR"));
 
     public static void main(String[] args) {
 
@@ -21,30 +29,46 @@ public class Main {
                 .load();
         flyway.migrate();
 
-        var insert = new EmployeeEntity();
-        insert.setName("Mateus");
-        insert.setSalary(new BigDecimal("4400"));
-        insert.setBirthday(OffsetDateTime.now().minusYears(31));
-        System.out.println(insert);
-        employeeDAO.insertWithProcedure(insert);
-        System.out.println(insert);
+//        var insert = new EmployeeEntity();
+//        insert.setName("Mateus");
+//        insert.setSalary(new BigDecimal("4400"));
+//        insert.setBirthday(OffsetDateTime.now().minusYears(31));
+//        System.out.println(insert);
+//        employeeDAO.insertWithProcedure(insert);
+//        System.out.println(insert);
 
 //        employeeDAO.findAll().forEach(System.out::println);
 
 //        System.out.println(employeeDAO.findById(4));
 
-        var employee = new EmployeeEntity();
-        employee.setId(insert.getId());
-        employee.setName("Gabriele");
-        employee.setSalary(new BigDecimal("3500"));
-        employee.setBirthday(OffsetDateTime.now().minusYears(28).minusDays(13));
-        employeeDAO.update(employee);
-        System.out.println(employee);
+//        var employee = new EmployeeEntity();
+//        employee.setId(insert.getId());
+//        employee.setName("Gabriele");
+//        employee.setSalary(new BigDecimal("3500"));
+//        employee.setBirthday(OffsetDateTime.now().minusYears(28).minusDays(13));
+//        employeeDAO.update(employee);
+//        System.out.println(employee);
 
 //        employeeDAO.delete(insert.getId());
 
-        employeeAuditDAO.findAll().forEach(System.out::println);
+//        employeeAuditDAO.findAll().forEach(System.out::println);
 
+
+        var entities = Stream.generate(() -> {
+            var employee = new EmployeeEntity();
+            employee.setName(faker.name().fullName());
+            employee.setSalary(BigDecimal.valueOf(faker.number().numberBetween(1000, 9999)));
+            employee.setBirthday(OffsetDateTime.of(LocalDate.now().minusYears(faker.number().numberBetween(40,20)),
+                    LocalTime.MIN, UTC));
+//            employee.setBirthday(OffsetDateTime.of(
+//                    faker.date().birthdayLocalDate(),
+//                    LocalTime.NOON,    // horário fixo no meio do dia para evitar horários fantasmas
+//                    UTC)
+//            );
+            return employee;
+        }).limit(10000).toList();
+
+        employeeDAO.insert(entities);
 
 
     }

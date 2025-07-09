@@ -6,6 +6,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +49,64 @@ public class EmployeeParamDAO {
             ex.printStackTrace();
         }
     }
+
+    public void insert(final List<EmployeeEntity> entities) {
+        try (var connection = ConnectionUtil.getConnection()) {
+            // SQL com placeholders para prepared statement (seguro contra SQL injection)
+            var sql = "INSERT INTO employees (name, salary, birthday) VALUES (?, ?, ?)";
+
+            try (var statement = connection.prepareStatement(sql)) {
+                // Desabilita o autocommit para agrupar os inserts em uma transação
+                connection.setAutoCommit(false);
+
+                // Loop para adicionar todos os inserts ao batch
+                for (int i = 0; i < entities.size(); i++) {
+                    var entity = entities.get(i);
+
+                    statement.setString(1, entity.getName());
+                    statement.setBigDecimal(2, entity.getSalary());
+
+                    var birthday = entity.getBirthday();
+
+//                    // Protege contra datas inválidas para o tipo TIMESTAMP
+//                    var minValidDate = LocalDate.of(1970, 1, 1);
+//                    if (birthday.toLocalDate().isBefore(minValidDate)) {
+//                        birthday = OffsetDateTime.of(minValidDate, LocalTime.MIN, UTC);
+//                    }
+
+                    // Converte OffsetDateTime para Timestamp (truncando milissegundos)
+                    var timestamp = Timestamp.valueOf(
+                            birthday.truncatedTo(ChronoUnit.SECONDS)
+                                    .withOffsetSameInstant(UTC)
+                                    .toLocalDateTime()
+                    );
+                    statement.setTimestamp(3, timestamp);
+
+                    // Adiciona o insert atual ao lote
+                    statement.addBatch();
+
+                    // Executa o batch a cada 1000 registros ou no último item
+                    if (i % 1000 == 0 || i == entities.size() - 1) {
+                        statement.executeBatch();
+                    }
+                }
+
+                // Confirma a transação após inserir todos os registros
+                connection.commit();
+
+            } catch (SQLException ex) {
+                // Se der erro no insert, faz rollback da transação
+                connection.rollback();
+                ex.printStackTrace();
+            }
+
+        } catch (SQLException ex) {
+            // Falha na conexão ou rollback
+            ex.printStackTrace();
+        }
+    }
+
+
 
     // Insere um funcionário na tabela usando uma stored procedure
     public void insertWithProcedure(final EmployeeEntity entity) {
