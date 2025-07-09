@@ -2,11 +2,7 @@ package br.com.dio.persistence;
 
 import br.com.dio.persistence.entity.EmployeeEntity;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
-import java.time.OffsetDateTime;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,8 +41,6 @@ public class EmployeeDAO {
             ex.printStackTrace();
         }
     }
-
-
 
     public void update(final EmployeeEntity entity) {
         // Define a SQL de atualização com placeholders (?) para uso seguro com PreparedStatement
