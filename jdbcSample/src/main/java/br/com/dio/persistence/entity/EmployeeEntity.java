@@ -12,5 +12,6 @@ public class EmployeeEntity {
     private String name;
     private BigDecimal salary;
     private OffsetDateTime birthday;
+    private ContactEntity contact;
 
 }
