@@ -18,27 +18,27 @@ public class Main {
                 .load();
         flyway.migrate();
 
-        /*var employee = new EmployeeEntity();
-        employee.setName("Rosa");
-        employee.setSalary(new BigDecimal("4400"));
-        employee.setBirthday(OffsetDateTime.now().minusYears(31));
-        System.out.println(employee);
-        employeeDAO.insert(employee);
-        System.out.println(employee);*/
+        /*var insert = new EmployeeEntity();
+        insert.setName("Rosa");
+        insert.setSalary(new BigDecimal("4400"));
+        insert.setBirthday(OffsetDateTime.now().minusYears(31));
+        System.out.println(insert);
+        employeeDAO.insert(insert);
+        System.out.println(insert);*/
 
 //        employeeDAO.findAll().forEach(System.out::println);
 
 //        System.out.println(employeeDAO.findById(4));
 
         /*var employee = new EmployeeEntity();
-        employee.setId(3L);
-        employee.setName("Gabriel");
-        employee.setSalary(new BigDecimal("5500"));
-        employee.setBirthday(OffsetDateTime.now().minusYears(18).minusDays(13));
+        employee.setId(insert.getId());
+        employee.setName("Rubens");
+        employee.setSalary(new BigDecimal("3500"));
+        employee.setBirthday(OffsetDateTime.now().minusYears(28).minusDays(13));
         employeeDAO.update(employee);
         System.out.println(employee);*/
 
-//        employeeDAO.delete(1);
+        employeeDAO.delete(4);
 
 
     }
